@@ -8,3 +8,19 @@ export const numsOptions = {
         ]
     })
 };
+
+export const finishOptions = {
+    reply_markup: JSON.stringify({
+        inline_keyboard: [
+            [{ text: "Закончить игру", callback_data: "/finish" }]
+        ]
+    })
+}
+
+export const commandsOptions = {
+    reply_markup: JSON.stringify({
+        inline_keyboard: [
+            [{ text: "Играть", callback_data: "/game" }, { text: "Обо мне", callback_data: "/info" }],
+        ]
+    })
+}
