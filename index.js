@@ -1,6 +1,7 @@
 import TelegramApi from "node-telegram-bot-api";
 import { commandsOptions, finishOptions } from "./options.js";
 import { getNoun } from "./utils.js";
+import { createCanvas, loadImage } from "canvas";
 
 const token = "1223121041:AAEzGNVQ14J_Op0hUVk84EV5Z6vFMEOTXpA";
 
@@ -24,10 +25,29 @@ const onGame = async (chatId) => {
     return bot.sendMessage(chatId, "Я загадала число от 0 до 1000, а ты попробуй его угадать", finishOptions);
 }
 
+const onMeme = async (chatId) => {
+    const todayDate = new Date().toLocaleDateString();
+    const currentYear = new Date().getFullYear();
+
+    const canvas = createCanvas(400, 600)
+    const ctx = canvas.getContext('2d')
+
+    const imgUrl = 'https://i.imgflip.com/8hvoej.jpg?a483408';
+
+    await loadImage(imgUrl).then((image) => {
+      ctx.drawImage(image, 0, 0, 400, 600)
+    })
+
+    ctx.font = "32px serif";
+    ctx.fillText(`01.01.${currentYear}`, 220, 100);
+    ctx.fillText(todayDate, 220, 500);
+
+    const createdImage = canvas.toBuffer("image/jpeg");
+    return bot.sendPhoto(chatId, createdImage, commandsOptions);
+}
+
 const start = () => {
     bot.on("message", async (message) => {
-        console.log(message)
-    
         const text = message.text;
         const chatId = message.chat.id;
     
@@ -35,6 +55,7 @@ const start = () => {
             { command: "/start", description: "Сначала" },
             { command: "/info", description: "Информация" },
             { command: "/game", description: "Угадай число" },
+            { command: "/meme", description: "Картинка дня" },
         ]);
             
         if (text === "/start") {
@@ -47,6 +68,10 @@ const start = () => {
 
         if (text === "/game") {
             return onGame(chatId);
+        }
+
+        if (text === "/meme") {
+            return onMeme(chatId);
         }
 
         if (chats[chatId]) {
@@ -90,6 +115,10 @@ const start = () => {
 
         if (data === "/game") {
             onGame(chatId);
+        }
+
+        if (data === "/meme") {
+            onMeme(chatId);
         }
     })
 }

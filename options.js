@@ -20,7 +20,8 @@ export const finishOptions = {
 export const commandsOptions = {
     reply_markup: JSON.stringify({
         inline_keyboard: [
-            [{ text: "Играть", callback_data: "/game" }, { text: "Обо мне", callback_data: "/info" }],
+            [{ text: "Обо мне", callback_data: "/info" }],
+            [{ text: "Играть", callback_data: "/game" }, { text: "Картинка дня", callback_data: "/meme" }],
         ]
     })
 }
