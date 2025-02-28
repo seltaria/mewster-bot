@@ -17,11 +17,21 @@ export const finishOptions = {
     })
 }
 
+export const goToMenuOptions = {
+    reply_markup: JSON.stringify({
+        inline_keyboard: [
+            [{ text: "Меню", callback_data: "/menu" }]
+        ]
+    })
+}
+
 export const commandsOptions = {
     reply_markup: JSON.stringify({
         inline_keyboard: [
             [{ text: "Обо мне", callback_data: "/info" }],
             [{ text: "Играть", callback_data: "/game" }, { text: "Картинка дня", callback_data: "/meme" }],
+            [{ text: "Что-то о птицах", callback_data: "/randomPost" }],
+            [{ text: "Хочу такие же стикеры!", callback_data: "/stickers" }],
         ]
     })
 }
