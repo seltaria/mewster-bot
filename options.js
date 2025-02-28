@@ -1,3 +1,5 @@
+import { commands } from "./constants.js";
+
 export const numsOptions = {
     reply_markup: JSON.stringify({
         inline_keyboard: [
@@ -12,7 +14,7 @@ export const numsOptions = {
 export const finishOptions = {
     reply_markup: JSON.stringify({
         inline_keyboard: [
-            [{ text: "Закончить игру", callback_data: "/finish" }]
+            [{ text: "Закончить игру", callback_data: commands.finishGame.command }]
         ]
     })
 }
@@ -20,7 +22,16 @@ export const finishOptions = {
 export const goToMenuOptions = {
     reply_markup: JSON.stringify({
         inline_keyboard: [
-            [{ text: "Меню", callback_data: "/menu" }]
+            [{ text: "Меню", callback_data: commands.menu.command }]
+        ]
+    })
+}
+
+export const getAnotherPostLinkOptions = {
+    reply_markup: JSON.stringify({
+        inline_keyboard: [
+            [{ text: "Другая запись", callback_data: commands.randomPostLink.command }],
+            [{ text: "Меню", callback_data: commands.menu.command }]
         ]
     })
 }
@@ -28,8 +39,8 @@ export const goToMenuOptions = {
 export const gamesOptions = {
     reply_markup: JSON.stringify({
         inline_keyboard: [
-            [{ text: "Угадай число", callback_data: "/guessNumber" }],
-            [{ text: "Игра в слова", callback_data: "/words" }],
+            [{ text: commands.guessNumber.description, callback_data: commands.guessNumber.command }],
+            [{ text: commands.wordsGame.description, callback_data: commands.wordsGame.command }],
         ]
     })
 }
@@ -37,10 +48,10 @@ export const gamesOptions = {
 export const commandsOptions = {
     reply_markup: JSON.stringify({
         inline_keyboard: [
-            [{ text: "Обо мне", callback_data: "/info" }],
-            [{ text: "Играть", callback_data: "/games" }, { text: "Картинка дня", callback_data: "/meme" }],
-            [{ text: "Что-то о птицах", callback_data: "/randomPost" }],
-            [{ text: "Хочу такие же стикеры!", callback_data: "/stickers" }],
+            [{ text: "Обо мне", callback_data: commands.info.command }],
+            [{ text: "Играть", callback_data: commands.games.command }, { text: "Картинка дня", callback_data: commands.memeOfTheDay.command }],
+            [{ text: "Что-то о птицах", callback_data: commands.randomPostLink.command }],
+            [{ text: "Хочу такие же стикеры!", callback_data: commands.stickersLink.command }],
         ]
     })
 }

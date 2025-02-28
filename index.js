@@ -1,7 +1,8 @@
 import TelegramApi from "node-telegram-bot-api";
-import { TOKEN } from "./constants.js";
+import { commands, TOKEN } from "./constants.js";
 import { commandsOptions, finishOptions, gamesOptions } from "./options.js";
 import { numbersGame, getMeme, getRandomPost, getInfo, getStickersLink, onStart, onWordsCommand, wordsGame } from "./commands/index.js";
+import { isCommand } from "./utils.js";
 
 const bot = new TelegramApi(TOKEN, { polling: true });
 
@@ -16,30 +17,34 @@ const onGame = async (chatId) => {
 }
 
 const onText = async (text, chatId, message) => {
-    switch (text) {
-        case "/start":
-            return onStart(chatId, message.from.first_name, bot);    
-        case "/info":
-            return getInfo(chatId, bot);   
-        case "/guessNumber":
-            return onGame(chatId, bot);   
-        case "/words":
-            return onWordsCommand(chats, chatId, bot);   
-        case "/meme":
-            return getMeme(chatId, bot);  
-        case "/stickers":
-            return getStickersLink(chatId, bot);
-        case "/randomPost":
-            return getRandomPost(chatId, bot);
-        default:
-            if (chats[chatId]?.numbers) {
-                return numbersGame(chats, chatId, text, bot);
-            }
-            if (chats[chatId]?.words) {
-                return wordsGame(chats, chatId, text, bot);
-            }
-            return bot.sendMessage(chatId, "Я такое пока не понимаю. Попробуй выбрать одну из существующих команд", commandsOptions);
+    if (isCommand(text)) {
+        switch (text) {
+            case commands.start.command:
+                return onStart(chatId, message.from.first_name, bot);    
+            case commands.info.command:
+                return getInfo(chatId, bot);   
+            case commands.guessNumber.command:
+                return onGame(chatId, bot);   
+            case commands.wordsGame.command:
+                return onWordsCommand(chats, chatId, bot);   
+            case commands.memeOfTheDay.command:
+                return getMeme(chatId, bot);  
+            case commands.stickersLink.command:
+                return getStickersLink(chatId, bot);
+            case commands.randomPostLink.command:
+                return getRandomPost(chatId, bot);
+            default:
+                return bot.sendMessage(chatId, "Я такое пока не понимаю. Попробуй выбрать одну из существующих команд", commandsOptions);
+        }
     }
+
+    if (chats[chatId]?.numbers) {
+        return numbersGame(chats, chatId, text, bot);
+    }
+    if (chats[chatId]?.wordGame) {
+        return wordsGame(chats, chatId, text, bot);
+    }
+    return bot.sendMessage(chatId, "Я такое пока не понимаю. Попробуй выбрать одну из существующих команд", commandsOptions);
 }
 
 const start = () => {
@@ -47,13 +52,7 @@ const start = () => {
         const text = message.text;
         const chatId = message.chat.id;
     
-        bot.setMyCommands([
-            { command: "/start", description: "Сначала" },
-            { command: "/info", description: "Информация" },
-            { command: "/guessNumber", description: "Угадай число" },
-            { command: "/words", description: "Играть в слова" },
-            { command: "/meme", description: "Картинка дня" },
-        ]);
+        bot.setMyCommands(Object.values(commands));
 
         return onText(text, chatId, message);
     })
@@ -62,16 +61,16 @@ const start = () => {
         const text = msg.data;
         const chatId = msg.message.chat.id;
 
-        if (text === "/finish") {
+        if (text === commands.finishGame.command) {
             chats[chatId] = null;
             return bot.sendMessage(chatId, "Приходи поиграть ещё!", commandsOptions);
         }
 
-        if (text === "/menu") {
+        if (text === commands.menu.command) {
             return bot.sendMessage(chatId, "Чем займёмся сегодня?", commandsOptions);
         }
 
-        if (text === "/games") {
+        if (text === commands.games.command) {
             return bot.sendMessage(chatId, "Во что хочешь поиграть?", gamesOptions);
         }
 
