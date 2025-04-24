@@ -1,4 +1,4 @@
-import { finishOptions } from "../options.js";
+import { finishOptions, goToMenuOptions } from "../options.js";
 import dictionary from "../assets/nouns.json" with { type: "json" };
 
 export const onWordsCommand = (chats, chatId, bot) => {
@@ -47,7 +47,7 @@ export const wordsGame = async (chats, chatId, text, bot) => {
         const availableRandomWord = wordsArray[Math.floor(Math.random() * setOfAvailableWords.size)];
 
         if (setOfAvailableWords.size === 0) {
-            return bot.sendMessage(chatId, `У меня нет слов, ты победил ✨`);
+            return bot.sendMessage(chatId, `У меня нет слов, ты победил ✨`, goToMenuOptions);
         }
         return availableRandomWord;
     }

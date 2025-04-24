@@ -1,5 +1,3 @@
-export const TOKEN = "1223121041:AAEzGNVQ14J_Op0hUVk84EV5Z6vFMEOTXpA";
-
 export const commands = {
   start: 
     { 

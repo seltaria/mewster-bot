@@ -1,10 +1,18 @@
 import TelegramApi from "node-telegram-bot-api";
-import { commands, TOKEN } from "./constants.js";
+import { commands } from "./constants.js";
 import { commandsOptions, finishOptions, gamesOptions } from "./options.js";
 import { numbersGame, getMeme, getRandomPost, getInfo, getStickersLink, onStart, onWordsCommand, wordsGame } from "./commands/index.js";
 import { isCommand } from "./utils.js";
 
-const bot = new TelegramApi(TOKEN, { polling: true });
+// TODO: env
+// const bot = new TelegramApi(process.env.BOT_TOKEN, { polling: true });
+const bot = new TelegramApi("1223121041:AAEzGNVQ14J_Op0hUVk84EV5Z6vFMEOTXpA");
+
+const webhookUrl = 'https://mewster-bot.vercel.app';
+
+bot.setWebHook(webhookUrl)
+    .then(() => console.log('Webhook установлен'))
+    .catch(console.error);
 
 const chats = {};
 
@@ -20,7 +28,7 @@ const onText = async (text, chatId, message) => {
     if (isCommand(text)) {
         switch (text) {
             case commands.start.command:
-                return onStart(chatId, message.from.first_name, bot);    
+                return onStart(chatId, message?.from.first_name || "", bot);    
             case commands.info.command:
                 return getInfo(chatId, bot);   
             case commands.guessNumber.command:
@@ -49,8 +57,8 @@ const onText = async (text, chatId, message) => {
 
 const start = () => {
     bot.on("message", async (message) => {
-        const text = message.text;
-        const chatId = message.chat.id;
+        const text = message?.text;
+        const chatId = message?.chat.id;
     
         bot.setMyCommands(Object.values(commands));
 
@@ -59,7 +67,7 @@ const start = () => {
 
     bot.on("callback_query", async (msg) => {
         const text = msg.data;
-        const chatId = msg.message.chat.id;
+        const chatId = msg.message?.chat.id;
 
         if (text === commands.finishGame.command) {
             chats[chatId] = null;
@@ -79,3 +87,13 @@ const start = () => {
 }
 
 start();
+
+export default async (req, res) => {
+    try {
+        await bot.processUpdate(req.body);
+    } catch (err) {
+        console.error('Error handling update:', err);
+    }
+
+    res.status(200);
+};
