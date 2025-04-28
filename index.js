@@ -1,99 +1,166 @@
-import TelegramApi from "node-telegram-bot-api";
-import { commands } from "./constants.js";
-import { commandsOptions, finishOptions, gamesOptions } from "./options.js";
-import { numbersGame, getMeme, getRandomPost, getInfo, getStickersLink, onStart, onWordsCommand, wordsGame } from "./commands/index.js";
-import { isCommand } from "./utils.js";
+import dotenv from 'dotenv';
+import process from "process";
+import { Markup, Telegraf } from "telegraf";
+import { commands, inlineKeyboard } from "./constants.js";
+import { createCanvas, loadImage } from "canvas";
+import { getNoun } from "./utils.js";
 
-// TODO: env
-// const bot = new TelegramApi(process.env.BOT_TOKEN, { polling: true });
-const bot = new TelegramApi("1223121041:AAEzGNVQ14J_Op0hUVk84EV5Z6vFMEOTXpA");
+dotenv.config();
 
-const webhookUrl = 'https://mewster-bot.vercel.app';
+const bot = new Telegraf(process.env.BOT_TOKEN);
 
-bot.setWebHook(webhookUrl)
-    .then(() => console.log('Webhook установлен'))
-    .catch(console.error);
+bot.telegram.setMyCommands(Object.values(commands));
 
-const chats = {};
+bot.start(async (ctx) => {
+  await ctx.sendSticker("https://cdn2.combot.org/frieren37/webp/2xf09f9184.webp");
+  ctx.reply(`Yookoso, ${ctx.from.first_name || ctx.from.username}`, inlineKeyboard)
+})
 
-const onGame = async (chatId) => {
-    const maxNumber = 1000;
-    const randomNumber = Math.floor(Math.random() * maxNumber);
-    chats[chatId] = { numbers: { number: randomNumber, attempts: 0 } };
-            
-    return bot.sendMessage(chatId, `Я загадала число от 0 до ${maxNumber}, а ты попробуй его угадать`, finishOptions);
-}
+bot.action(commands.info.command, async (ctx) => {
+  ctx.answerCbQuery();
+  await ctx.sendSticker("https://cdn2.combot.org/frieren37/webp/3xf09f9184.webp")
+  ctx.reply("Я бот, который делает разные штуки", inlineKeyboard)
+})
 
-const onText = async (text, chatId, message) => {
-    if (isCommand(text)) {
-        switch (text) {
-            case commands.start.command:
-                return onStart(chatId, message?.from.first_name || "", bot);    
-            case commands.info.command:
-                return getInfo(chatId, bot);   
-            case commands.guessNumber.command:
-                return onGame(chatId, bot);   
-            case commands.wordsGame.command:
-                return onWordsCommand(chats, chatId, bot);   
-            case commands.memeOfTheDay.command:
-                return getMeme(chatId, bot);  
-            case commands.stickersLink.command:
-                return getStickersLink(chatId, bot);
-            case commands.randomPostLink.command:
-                return getRandomPost(chatId, bot);
-            default:
-                return bot.sendMessage(chatId, "Я такое пока не понимаю. Попробуй выбрать одну из существующих команд", commandsOptions);
-        }
-    }
+bot.action(commands.stickersLink.command, (ctx) => {
+  ctx.answerCbQuery();
+  ctx.reply("https://t.me/addstickers/frieren37")
+})
 
-    if (chats[chatId]?.numbers) {
-        return numbersGame(chats, chatId, text, bot);
-    }
-    if (chats[chatId]?.wordGame) {
-        return wordsGame(chats, chatId, text, bot);
-    }
-    return bot.sendMessage(chatId, "Я такое пока не понимаю. Попробуй выбрать одну из существующих команд", commandsOptions);
-}
+bot.action(commands.memeOfTheDay.command, async (botCtx) => {
+  const todayDate = new Date().toLocaleDateString();
+  const currentYear = new Date().getFullYear();
 
-const start = () => {
-    bot.on("message", async (message) => {
-        const text = message?.text;
-        const chatId = message?.chat.id;
-    
-        bot.setMyCommands(Object.values(commands));
+  const canvas = createCanvas(400, 600)
+  const ctx = canvas.getContext('2d')
 
-        return onText(text, chatId, message);
-    })
+  const imgUrl = 'https://i.imgflip.com/8hvoej.jpg?a483408';
 
-    bot.on("callback_query", async (msg) => {
-        const text = msg.data;
-        const chatId = msg.message?.chat.id;
+  await loadImage(imgUrl).then((image) => {
+    ctx.drawImage(image, 0, 0, 400, 600)
+  })
 
-        if (text === commands.finishGame.command) {
-            chats[chatId] = null;
-            return bot.sendMessage(chatId, "Приходи поиграть ещё!", commandsOptions);
-        }
+  ctx.font = "30px";
+  ctx.fillText(`01.01.${currentYear}`, 220, 100);
+  ctx.fillText(todayDate, 220, 500);
 
-        if (text === commands.menu.command) {
-            return bot.sendMessage(chatId, "Чем займёмся сегодня?", commandsOptions);
-        }
+  const createdImage = canvas.toBuffer("image/jpeg");
 
-        if (text === commands.games.command) {
-            return bot.sendMessage(chatId, "Во что хочешь поиграть?", gamesOptions);
-        }
+  botCtx.answerCbQuery();
+  await botCtx.replyWithPhoto({ source: createdImage })
+})
 
-        return onText(text, chatId, msg);
-    })
-}
+bot.action(commands.games.command, (ctx) => {
+  ctx.answerCbQuery();
+  ctx.reply("Во что хочешь поиграть?", Markup.inlineKeyboard([
+    [
+      Markup.button.callback(commands.guessNumber.description, commands.guessNumber.command),
+      Markup.button.callback(commands.wordsGame.description, commands.wordsGame.command),
+    ],
+  ]))
+})
 
-start();
+bot.action(commands.menu.command, (ctx) => {
+  ctx.answerCbQuery();
+  ctx.reply("Чем займёмся сегодня?", inlineKeyboard)
+})
+
+bot.action(commands.randomPostLink.command, (ctx) => {
+  const lastPostId = 2001;
+  const randomNumber = Math.floor(Math.random() * (lastPostId - 1) + 1);
+
+  ctx.answerCbQuery();
+  ctx.reply(`https://t.me/expkart/${randomNumber}`, Markup.inlineKeyboard([
+    [
+      Markup.button.callback("Другая запись", commands.randomPostLink.command),
+      Markup.button.callback("Меню", commands.menu.command)
+    ]
+  ]));
+})
+
+const games = {};
+
+bot.action(commands.guessNumber.command, (ctx) => {
+  const chatId = ctx.chat.id;
+  games[chatId] = {
+    targetNumber: Math.floor(Math.random() * 1000) + 1,
+    attempts: 0
+  };
+  const maxNumber = 1000;
+
+  ctx.reply(`Я загадала число от 1 до ${maxNumber}, а ты попробуй его угадать`);
+})
+
+bot.on('text', (ctx) => {
+  const chatId = ctx.chat.id;
+  const game = games[chatId];
+  
+  // Если игра не начата, игнорируем
+  if (!game) return;
+  
+  const guess = parseInt(ctx.message.text);
+  
+  // Проверяем, что введено число
+  if (isNaN(guess)) {
+      ctx.reply("В этой игре нужно писать только числа");
+      return;
+  }
+  
+  // Увеличиваем счетчик попыток
+  game.attempts++;
+  
+  // Проверяем число
+  if (guess === game.targetNumber) {
+    ctx.reply(`Ура! Угадал! Тебе потребовалось всего лишь ${game.attempts} ${getNoun(game.attempts, ["попытка","попытки","попыток"])}`,
+    Markup.inlineKeyboard([
+      [Markup.button.callback(commands.menu.description, commands.menu.command)]
+    ]))
+    delete games[chatId]; // Завершаем игру
+  } else if (guess < game.targetNumber) {
+      ctx.reply('Мое число больше. Попробуй еще раз', 
+        Markup.inlineKeyboard([
+          [Markup.button.callback(commands.finishGame.command, commands.finishGame.command)]
+        ])
+      );
+  } else {
+      ctx.reply('Мое число меньше. Попробуй еще раз', 
+        Markup.inlineKeyboard([
+          [Markup.button.callback(commands.finishGame.description, commands.finishGame.command)]
+        ])
+      );
+  }
+});
+
+bot.action(commands.finishGame.command, (ctx) => {
+  const chatId = ctx.chat.id;
+  if (games[chatId]) {
+      ctx.reply(`Я загадывала число ${games[chatId].targetNumber}. Приходи поиграть ещё!`);
+      delete games[chatId];
+  } else {
+      ctx.reply("Сейчас нет активной игры, можешь начать новую", 
+        Markup.inlineKeyboard([
+          [Markup.button.callback(commands.games.description, commands.games.command)]
+        ])
+      );
+  }
+});
+
+bot.launch()
+
+// TODO: обработать неизвестные команды
+// return bot.sendMessage(chatId, "Я такое пока не понимаю. Попробуй выбрать одну из существующих команд", commandsOptions);
 
 export default async (req, res) => {
-    try {
-        await bot.processUpdate(req.body);
-    } catch (err) {
-        console.error('Error handling update:', err);
-    }
+  try {
+    const webhookUrl = 'https://mewster-bot.vercel.app';
+    bot.telegram.setWebhook(webhookUrl)
+      .then(() => console.log('Webhook установлен'))
+      .catch(console.error);
 
-    res.status(200);
+    await bot.handleUpdate(req.body);
+  } catch (err) {
+      console.error('Error handling update:', err);
+  }
+
+  res.status(200);
 };

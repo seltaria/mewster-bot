@@ -1,3 +1,5 @@
+import { Markup } from "telegraf";
+
 export const commands = {
   start: 
     { 
@@ -50,3 +52,19 @@ export const commands = {
       description: "Ссылка на стикеры" 
     },
 };
+
+export const inlineKeyboard = Markup.inlineKeyboard([
+  [
+    Markup.button.callback('Обо мне', commands.info.command),
+  ],
+  [
+    Markup.button.callback("Играть", commands.games.command),
+    Markup.button.callback("Картинка дня", commands.memeOfTheDay.command),
+  ],
+  [
+    Markup.button.callback("Что-то о птицах", commands.randomPostLink.command),
+  ],
+  [
+    Markup.button.callback("Хочу такие же стикеры!", commands.stickersLink.command),
+  ],
+])

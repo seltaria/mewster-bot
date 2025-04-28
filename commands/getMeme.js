@@ -14,7 +14,7 @@ export const getMeme = async (chatId, bot) => {
       ctx.drawImage(image, 0, 0, 400, 600)
     })
 
-    ctx.font = "30px cursive";
+    ctx.font = "30px";
     ctx.fillText(`01.01.${currentYear}`, 220, 100);
     ctx.fillText(todayDate, 220, 500);
 
