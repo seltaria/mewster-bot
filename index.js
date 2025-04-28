@@ -2,14 +2,21 @@ import dotenv from 'dotenv';
 import process from "process";
 import { Markup, Telegraf } from "telegraf";
 import { commands, inlineKeyboard } from "./constants.js";
-import { createCanvas, loadImage } from "canvas";
+import { createCanvas, loadImage, registerFont } from "canvas";
 import { getNoun } from "./utils.js";
+import { wordsGame } from './commands/wordsGame.js';
+import path from 'path';
 
 dotenv.config();
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
 bot.telegram.setMyCommands(Object.values(commands));
+
+const webhookUrl = 'https://mewster-bot.vercel.app';
+bot.telegram.setWebhook(webhookUrl)
+  .then(() => console.log('Webhook установлен'))
+  .catch(console.error);
 
 bot.start(async (ctx) => {
   await ctx.sendSticker("https://cdn2.combot.org/frieren37/webp/2xf09f9184.webp");
@@ -28,7 +35,7 @@ bot.action(commands.stickersLink.command, (ctx) => {
 })
 
 bot.action(commands.memeOfTheDay.command, async (botCtx) => {
-  const todayDate = new Date().toLocaleDateString();
+  const todayDate = new Date().toLocaleDateString("ru-RU");
   const currentYear = new Date().getFullYear();
 
   const canvas = createCanvas(400, 600)
@@ -40,7 +47,9 @@ bot.action(commands.memeOfTheDay.command, async (botCtx) => {
     ctx.drawImage(image, 0, 0, 400, 600)
   })
 
-  ctx.font = "30px";
+  registerFont(path.join(process.cwd(), 'assets/fonts/Montserrat.ttf'), { family: 'Montserrat' });
+
+  ctx.font = "30px Montserrat";
   ctx.fillText(`01.01.${currentYear}`, 220, 100);
   ctx.fillText(todayDate, 220, 500);
 
@@ -83,8 +92,10 @@ const games = {};
 bot.action(commands.guessNumber.command, (ctx) => {
   const chatId = ctx.chat.id;
   games[chatId] = {
-    targetNumber: Math.floor(Math.random() * 1000) + 1,
-    attempts: 0
+    guessNum: {
+      targetNumber: Math.floor(Math.random() * 1000) + 1,
+      attempts: 0
+    }
   };
   const maxNumber = 1000;
 
@@ -96,38 +107,44 @@ bot.on('text', (ctx) => {
   const game = games[chatId];
   
   // Если игра не начата, игнорируем
-  if (!game) return;
-  
-  const guess = parseInt(ctx.message.text);
-  
-  // Проверяем, что введено число
-  if (isNaN(guess)) {
+  if (!game.guessNum || !game.wordsGame) return;
+
+  if (game.guessNum) {
+    const guess = parseInt(ctx.message.text);
+
+    // Проверяем, что введено число
+    if (isNaN(guess)) {
       ctx.reply("В этой игре нужно писать только числа");
       return;
+    }
+
+    // Увеличиваем счетчик попыток
+    game.attempts++;
+
+    // Проверяем число
+    if (guess === game.targetNumber) {
+      ctx.reply(`Ура! Угадал! Тебе потребовалось всего лишь ${game.attempts} ${getNoun(game.attempts, ["попытка","попытки","попыток"])}`,
+      Markup.inlineKeyboard([
+        [Markup.button.callback(commands.menu.description, commands.menu.command)]
+      ]))
+      delete games[chatId]; // Завершаем игру
+    } else if (guess < game.targetNumber) {
+        ctx.reply('Мое число больше. Попробуй еще раз', 
+          Markup.inlineKeyboard([
+            [Markup.button.callback(commands.finishGame.command, commands.finishGame.command)]
+          ])
+        );
+    } else {
+        ctx.reply('Мое число меньше. Попробуй еще раз', 
+          Markup.inlineKeyboard([
+            [Markup.button.callback(commands.finishGame.description, commands.finishGame.command)]
+          ])
+        );
+    }
   }
-  
-  // Увеличиваем счетчик попыток
-  game.attempts++;
-  
-  // Проверяем число
-  if (guess === game.targetNumber) {
-    ctx.reply(`Ура! Угадал! Тебе потребовалось всего лишь ${game.attempts} ${getNoun(game.attempts, ["попытка","попытки","попыток"])}`,
-    Markup.inlineKeyboard([
-      [Markup.button.callback(commands.menu.description, commands.menu.command)]
-    ]))
-    delete games[chatId]; // Завершаем игру
-  } else if (guess < game.targetNumber) {
-      ctx.reply('Мое число больше. Попробуй еще раз', 
-        Markup.inlineKeyboard([
-          [Markup.button.callback(commands.finishGame.command, commands.finishGame.command)]
-        ])
-      );
-  } else {
-      ctx.reply('Мое число меньше. Попробуй еще раз', 
-        Markup.inlineKeyboard([
-          [Markup.button.callback(commands.finishGame.description, commands.finishGame.command)]
-        ])
-      );
+
+  if (game.wordsGame) {
+    wordsGame(ctx, games[chatId].wordGame)
   }
 });
 
@@ -145,22 +162,30 @@ bot.action(commands.finishGame.command, (ctx) => {
   }
 });
 
+bot.action(commands.wordsGame.command, (ctx) => {
+  const chatId = ctx.chat.id;
+  games[chatId] = { wordsGame: { words: new Set(), expectedLetter: null } };
+  ctx.reply("Сыграем в слова? Нужно по очереди писать слово, которое начинается на последнюю букву предыдущего слова. Ты начинаешь",
+    Markup.inlineKeyboard([
+      [Markup.button.callback(commands.finishGame.description, commands.finishGame.command)]
+    ])
+  )
+})
+
 bot.launch()
 
 // TODO: обработать неизвестные команды
 // return bot.sendMessage(chatId, "Я такое пока не понимаю. Попробуй выбрать одну из существующих команд", commandsOptions);
 
 export default async (req, res) => {
-  try {
-    const webhookUrl = 'https://mewster-bot.vercel.app';
-    bot.telegram.setWebhook(webhookUrl)
-      .then(() => console.log('Webhook установлен'))
-      .catch(console.error);
-
-    await bot.handleUpdate(req.body);
-  } catch (err) {
+  if (req.method === 'POST') {
+    try {
+      await bot.handleUpdate(req.body, res);
+    } catch (err) {
       console.error('Error handling update:', err);
+      res.status(500).send('Error handling update');
+    }
+  } else {
+    res.status(200).send('Hello from Telegram bot!');
   }
-
-  res.status(200);
 };
