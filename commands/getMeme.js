@@ -1,23 +1,31 @@
-import { createCanvas, loadImage } from "canvas";
-import { goToMenuOptions } from "../options.js";
+import { createCanvas, loadImage, registerFont } from "canvas";
+import dotenv from 'dotenv';
+import process from "process";
+import path from 'path';
 
-export const getMeme = async (chatId, bot) => {
-    const todayDate = new Date().toLocaleDateString();
-    const currentYear = new Date().getFullYear();
+dotenv.config();
 
-    const canvas = createCanvas(400, 600)
-    const ctx = canvas.getContext('2d')
+export const getMeme = async (botCtx) => {
+  const todayDate = new Date().toLocaleDateString("ru-RU");
+  const currentYear = new Date().getFullYear();
 
-    const imgUrl = 'https://i.imgflip.com/8hvoej.jpg?a483408';
+  const canvas = createCanvas(400, 600)
+  const ctx = canvas.getContext('2d')
 
-    await loadImage(imgUrl).then((image) => {
-      ctx.drawImage(image, 0, 0, 400, 600)
-    })
+  const imgUrl = 'https://i.imgflip.com/8hvoej.jpg?a483408';
 
-    ctx.font = "30px";
-    ctx.fillText(`01.01.${currentYear}`, 220, 100);
-    ctx.fillText(todayDate, 220, 500);
+  await loadImage(imgUrl).then((image) => {
+    ctx.drawImage(image, 0, 0, 400, 600)
+  })
 
-    const createdImage = canvas.toBuffer("image/jpeg");
-    return bot.sendPhoto(chatId, createdImage, goToMenuOptions);
+  registerFont(path.join(process.cwd(), 'assets/fonts/Montserrat.ttf'), { family: 'Montserrat' });
+
+  ctx.font = "30px Montserrat";
+  ctx.fillText(`01.01.${currentYear}`, 220, 100);
+  ctx.fillText(todayDate, 220, 500);
+
+  const createdImage = canvas.toBuffer("image/jpeg");
+
+  botCtx.answerCbQuery();
+  await botCtx.replyWithPhoto({ source: createdImage })
 }

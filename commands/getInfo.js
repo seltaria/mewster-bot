@@ -1,6 +1,7 @@
-import { goToMenuOptions } from "../options.js";
+import { inlineKeyboard } from "../constants.js";
 
-export const getInfo = async (chatId, bot) => {
-    await bot.sendSticker(chatId, "https://cdn2.combot.org/frieren37/webp/3xf09f9184.webp");
-    return bot.sendMessage(chatId, "Я бот, который делает разные штуки", goToMenuOptions);
+export const getInfo = async (ctx) => {
+  ctx.answerCbQuery();
+  await ctx.sendSticker("https://cdn2.combot.org/frieren37/webp/3xf09f9184.webp")
+  ctx.reply("Я бот, который делает разные штуки", inlineKeyboard)
 }

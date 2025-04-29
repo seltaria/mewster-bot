@@ -1,7 +1,15 @@
-import { getAnotherPostLinkOptions } from "../options.js";
+import { Markup } from "telegraf";
+import { commands } from "../constants.js";
 
-export const getRandomPost = (chatId, bot) => {
-    const lastPostId = 2001;
-    const randomNumber = Math.floor(Math.random() * (lastPostId - 1) + 1);
-    return bot.sendMessage(chatId, `https://t.me/expkart/${randomNumber}`, getAnotherPostLinkOptions)
+export const getRandomPost = (ctx) => {
+  const lastPostId = 2001;
+  const randomNumber = Math.floor(Math.random() * (lastPostId - 1) + 1);
+
+  ctx.answerCbQuery();
+  ctx.reply(`https://t.me/expkart/${randomNumber}`, Markup.inlineKeyboard([
+    [
+      Markup.button.callback("Другая запись", commands.randomPostLink.command),
+      Markup.button.callback("Меню", commands.menu.command)
+    ]
+  ]));
 }
