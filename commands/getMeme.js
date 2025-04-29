@@ -26,6 +26,5 @@ export const getMeme = async (botCtx) => {
 
   const createdImage = canvas.toBuffer("image/jpeg");
 
-  botCtx.answerCbQuery();
   await botCtx.replyWithPhoto({ source: createdImage })
 }

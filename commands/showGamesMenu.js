@@ -2,7 +2,6 @@ import { Markup } from "telegraf";
 import { commands } from "../constants.js";
 
 export const showGamesMenu = (ctx) => {
-  ctx.answerCbQuery();
   ctx.reply("Во что хочешь поиграть?", Markup.inlineKeyboard([
     [
       Markup.button.callback(commands.guessNumber.description, commands.guessNumber.command),

@@ -5,7 +5,6 @@ export const getRandomPost = (ctx) => {
   const lastPostId = 2001;
   const randomNumber = Math.floor(Math.random() * (lastPostId - 1) + 1);
 
-  ctx.answerCbQuery();
   ctx.reply(`https://t.me/expkart/${randomNumber}`, Markup.inlineKeyboard([
     [
       Markup.button.callback("Другая запись", commands.randomPostLink.command),
