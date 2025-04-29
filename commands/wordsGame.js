@@ -1,6 +1,8 @@
-import dictionary from "../assets/nouns.json" with { type: "json" };
 import { Markup } from "telegraf";
 import { commands, inlineKeyboard } from "../constants.js";
+import { readFileSync } from "fs";
+import path from 'path';
+import process from "process";
 
 export const handleWordsGame = (ctx, games) => {
   const chatId = ctx.chat.id;
@@ -15,12 +17,16 @@ export const handleWordsGame = (ctx, games) => {
 export const wordsGame = async (ctx, savedData) => {
   const text = ctx.text;
 
-  const data = JSON.parse(JSON.stringify(dictionary));
+  let usersPath = path.join(process.cwd(), 'nouns.json');
+  let rawData = readFileSync(usersPath);
+
+  const data = await JSON.parse(rawData);
+  
   const dict = Object.entries(data).reduce((acc, [letter, words]) => {
     acc[letter] = new Set(words);
     return acc;
   }, {})
-  
+
   const formattedText = text.toLowerCase();
   const dictLetters = new Set(Object.keys(dict));
 

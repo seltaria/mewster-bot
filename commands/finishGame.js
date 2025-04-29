@@ -5,7 +5,18 @@ export const finishGame = (ctx, games) => {
   const chatId = ctx.chat.id;
   if (games[chatId]) {
     if (games[chatId].guessNum) {
-      ctx.reply(`Я загадывала число ${games[chatId].guessNum.targetNumber}. Приходи поиграть ещё!`);
+      ctx.reply(`Я загадывала число ${games[chatId].guessNum.targetNumber}. Приходи поиграть ещё!`,
+        Markup.inlineKeyboard([
+          [Markup.button.callback(commands.menu.description, commands.menu.command)]
+        ])
+      );
+    }
+    if (games[chatId].wordsGame) {
+      ctx.reply("Приходи поиграть ещё!",
+        Markup.inlineKeyboard([
+          [Markup.button.callback(commands.menu.description, commands.menu.command)]
+        ])
+      );
     }
     delete games[chatId];
   } else {
